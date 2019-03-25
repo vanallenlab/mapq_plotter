@@ -17,9 +17,16 @@ python mapq_around_locus.py
 
 # Example positions.txt file contents (tab-delimited):
 Chromosome	Start
+
 20	16059226
+
 20	16061080
+
 20	16064664
+
 20	16067971
+
 20	16073033
+
 20	16078668
+
