@@ -29,8 +29,8 @@ def mapq_around_locus(bam_file, chromosome, position, window, offset):
             quality = int(line.split('\t')[4])
             quality_scores.append(quality)
         except:
-            sys.stdout.write("Couldn't get quality score for {}\n".format(line.split('\t')))
-    quality_scores = random.sample(range(0, 60), 30)
+            sys.stderr.write("Couldn't get quality score for {}\n".format(line.split('\t')))
+    #quality_scores = random.sample(range(0, 60), 30)
     return pd.DataFrame(quality_scores, columns=[offset])
 
 
@@ -38,7 +38,6 @@ def plot_mapq_around_locus(bam_file, chromosome, position, window, slide, max_di
     """Plot the distribution of read quality scores"""
     dfs = []
     for offset in range(-max_distance, max_distance+slide, slide):
-        print(offset)
         dfs.append(mapq_around_locus(bam_file, chromosome, position + offset, window, offset))
 
     merged_df = pd.DataFrame()
@@ -87,8 +86,7 @@ def main():
 
     if positions_file:
         # If a positions file is specified, output plots for each of the positions listed in the file
-        positions = pd.read_csv(positions_file, sep=',', header='infer')
-        print(positions)
+        positions = pd.read_csv(positions_file, sep='\t', header='infer')
         for row in positions.iterrows():
             row = row[1]
             chromosome = row.Chromosome
