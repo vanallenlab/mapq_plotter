@@ -1,12 +1,17 @@
-import matplotlib
-matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+#matplotlib.use('Agg')
 import argparse
 import pysam
 import subprocess
 import sys
 import math
+import pandas as pd
+import seaborn as sns
+import random
 
 def mapq_around_locus(bam_file, chromosome, position, window):
+    """Get the distribution of quality scores for all reads falling within the window of size 'window' centered around
+    'position', and return a dataframe column containing these quality scores."""
     start_position = position-math.floor(window/2)
     end_position = position+math.ceil(window/2)
     pos = '{}:{}-{}'.format(chromosome, start_position, end_position)
@@ -14,7 +19,7 @@ def mapq_around_locus(bam_file, chromosome, position, window):
     get_qualities_command = 'samtools view {} {}'.format(bam_file, pos)
     print(get_qualities_command)
 
-    # Run the samtools view command using subprocess, and place the stdout output into the qualities variable as a string
+    # Run the samtools view command using subprocess
     samtools_view = subprocess.check_output(get_qualities_command.split())
 
     # Split the sam_view output string into each line comprising it
@@ -26,7 +31,42 @@ def mapq_around_locus(bam_file, chromosome, position, window):
             quality_scores.append(quality)
         except:
             sys.stdout.write("Couldn't get quality score for {}\n".format(line.split('\t')))
-    print(quality_scores)
+    quality_scores = random.sample(range(0, 60), 30)
+    return pd.DataFrame(quality_scores, columns=['{}:{}-{}'.format(chromosome, start_position, end_position)])
+
+
+def plot_mapq_around_locus(bam_file, chromosome, position, window, slide, max_distance):
+    """Plot the distribution of read quality scores"""
+    dfs = []
+    for offset in range(-max_distance, max_distance, slide):
+        dfs.append(mapq_around_locus(bam_file, chromosome, position + offset, window))
+
+    merged_df = pd.DataFrame()
+    for df in dfs:
+        merged_df = pd.concat([merged_df, df], axis=1)
+
+    quantiles_df = pd.DataFrame()
+    for df in dfs:
+        quantiles = df.quantile([.2, .4, .6, .8, 1], axis=0)
+        quantiles_df = pd.concat([quantiles_df, quantiles], axis=1)
+
+
+    sns.set_style('whitegrid')
+    #sns.violinplot(data=merged_df, palette=['b'])
+    #sns.swarmplot(data=merged_df, palette=['k'], alpha=.05)
+    plt.xticks(rotation=10, size=4)
+    plt.ylabel('MapQ Score')
+    plt.xlabel('Interval')
+    plt.title('Read MAPQ quantiles in {} bp range around {}:{}'.format(max_distance*2, chromosome, position))
+
+    quantiles_values = ['20%', '40%', '60%', '80%', '100%']
+    quantiles_df.index = pd.Index(quantiles_values)
+
+    quantiles_df = quantiles_df.T
+
+    plt.plot(quantiles_df)
+
+    plt.savefig('{}:{}.png'.format(chromosome, position))
 
 
 def main():
@@ -34,21 +74,33 @@ def main():
     parser.add_argument('--bam_file', metavar='bam_file', type=str)
     parser.add_argument('--chromosome', metavar='chromosome', type=str)
     parser.add_argument('--position', metavar='position', type=int)
-    parser.add_argument('--window', metavar='window', type=int, default=50)
-    parser.add_argument('--slide', metavar='slide', type=int, default=25)
-    parser.add_argument('--max_distance', metavar='max_distance', type=int, default=100)
+    parser.add_argument('--positions_file', metavar='positions_file', type=str, default=None)
+    parser.add_argument('--window', metavar='window', type=int, default=100)
+    parser.add_argument('--slide', metavar='slide', type=int, default=50)
+    parser.add_argument('--max_distance', metavar='max_distance', type=int, default=400)
     args = parser.parse_args()
 
     bam_file = args.bam_file
     chromosome = args.chromosome
     position = args.position
-    window = args.slide
+    positions_file = args.positions_file
+    window = args.window
     slide = args.slide
     max_distance = args.max_distance
 
-    for i in range(0, max_distance, slide):a
-        mapq_around_locus(bam_file, chromosome, position+i*slide, window)
-
+    if positions_file:
+        # If a positions file is specified, output plots for each of the positions listed in the file
+        positions = pd.read_csv(positions_file, sep='\t', header='infer')
+        print(positions)
+        for row in positions.iterrows():
+            row = row[1]
+            print(row)
+            chromosome = row.Chromosome
+            position = row.Start
+            plot_mapq_around_locus(bam_file, chromosome, position, window, slide, max_distance)
+    else:
+        # If a positions file is not specified, but chromosome and position are specified, just do a one-time plotting:
+        plot_mapq_around_locus(bam_file, chromosome, position, window, slide, max_distance)
 
 if __name__ == '__main__':
     main()
