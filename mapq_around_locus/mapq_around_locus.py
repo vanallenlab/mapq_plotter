@@ -50,10 +50,7 @@ def plot_mapq_around_locus(bam_file, chromosome, position, window, slide, max_di
         quantiles = df.quantile([.2, .4, .6, .8, 1], axis=0)
         quantiles_df = pd.concat([quantiles_df, quantiles], axis=1)
 
-
     sns.set_style('whitegrid')
-    #sns.violinplot(data=merged_df, palette=['b'])
-    #sns.swarmplot(data=merged_df, palette=['k'], alpha=.05)
     plt.xticks(size=8)
     plt.ylabel('MapQ Score')
     plt.xlabel('Offset (base pairs)')
