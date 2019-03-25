@@ -1,10 +1,13 @@
-import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use('Agg')
+
 import argparse
 import subprocess
 import sys
 import math
 import pandas as pd
 import seaborn as sns
+
 import random
 
 """
@@ -71,10 +74,10 @@ def plot_mapq_around_locus(bam_file, chromosome, position, window, slide, max_di
         quantiles_df = pd.concat([quantiles_df, quantiles], axis=1)
 
     sns.set_style('whitegrid')
-    plt.xticks(size=8)
-    plt.ylabel('MapQ Score')
-    plt.xlabel('Offset (base pairs)')
-    plt.title('Read MAPQ quantiles in {} bp range around {}:{}\nWindow size: {}'.format(max_distance*2,
+    matplotlib.pyplot.xticks(size=8)
+    matplotlib.pyplot.ylabel('MapQ Score')
+    matplotlib.pyplot.xlabel('Offset (base pairs)')
+    matplotlib.pyplot.title('Read MAPQ quantiles in {} bp range around {}:{}\nWindow size: {}'.format(max_distance*2,
                                                                                         chromosome,
                                                                                         position,
                                                                                         window))
@@ -84,9 +87,9 @@ def plot_mapq_around_locus(bam_file, chromosome, position, window, slide, max_di
 
     quantiles_df = quantiles_df.T
 
-    plt.plot(quantiles_df, marker='.')
-    plt.savefig('{}/{}:{}.png'.format(output_dir, chromosome, position))
-    plt.figure()
+    matplotlib.pyplot.plot(quantiles_df, marker='.')
+    matplotlib.pyplot.savefig('{}/{}:{}.png'.format(output_dir, chromosome, position))
+    matplotlib.pyplot.figure()
 
 
 def main():
