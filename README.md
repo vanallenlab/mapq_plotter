@@ -1,6 +1,6 @@
 # mapq_plotter
 
-A script to help you visualize the distribution of MAPQ scores for the reads around a given position in your bam file.
+A script to help you visualize the distribution of MAPQ scores for the reads around a given position in your bam file. Incorporated into this FireCloud workflow: https://portal.firecloud.org/#methods/ekofman/mapq_plotting/1
 
 # Example usage at single location:
 python mapq_around_locus.py
