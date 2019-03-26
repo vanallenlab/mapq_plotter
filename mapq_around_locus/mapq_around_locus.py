@@ -55,6 +55,7 @@ def mapq_around_locus(bam_file, chromosome, position, window, offset):
             quality_scores.append(quality)
         except:
             sys.stderr.write("Couldn't get quality score for {}\n".format(line.split('\t')))
+    #quality_scores = [random.randint(1,10) for i in range(1,3)]
     return pd.DataFrame(quality_scores, columns=[offset])
 
 
@@ -70,8 +71,21 @@ def plot_mapq_around_locus(bam_file, chromosome, position, window, slide, max_di
 
     quantiles_df = pd.DataFrame()
     for df in dfs:
-        quantiles = df.quantile([.2, .4, .6, .8, 1], axis=0)
-        quantiles_df = pd.concat([quantiles_df, quantiles], axis=1)
+        if quantiles_df.empty:
+            try:
+                quantiles_df = df.quantile([.2, .4, .6, .8, 1], axis=0)
+            except:
+                print(df)
+                print(len(df))
+                pass
+        else:
+            try:
+                quantiles = df.quantile([.2, .4, .6, .8, 1], axis=0)
+                quantiles_df = pd.concat([quantiles_df, quantiles], axis=1)
+            except:
+                print(df)
+                print(len(df))
+                pass
 
     sns.set_style('whitegrid')
     matplotlib.pyplot.xticks(size=8)
@@ -89,7 +103,7 @@ def plot_mapq_around_locus(bam_file, chromosome, position, window, slide, max_di
 
     matplotlib.pyplot.plot(quantiles_df, marker='.')
     matplotlib.pyplot.savefig('{}/{}:{}.png'.format(output_dir, chromosome, position))
-    matplotlib.pyplot.figure()
+    matplotlib.pyplot.clf()
 
 
 def main():
